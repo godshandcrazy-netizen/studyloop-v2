@@ -136,16 +136,16 @@
     adminBox.style.cssText = 'display:none;margin-top:22px;padding:16px;border:2px solid #22afe8;border-radius:16px;background:#f7fbfd;color:#203037;';
     adminBox.innerHTML = `
       <h3 style="margin:0 0 10px">📢 서버 전체 공지</h3>
+      <p class="msg" style="margin-top:0">관리자 아이디: yegeon2919</p>
       <textarea id="serverAnnouncementInput" maxlength="500" placeholder="모든 사용자에게 표시할 공지" style="width:100%;min-height:90px;resize:vertical;padding:12px;border:2px solid #dbe5e8;border-radius:12px;font:inherit"></textarea>
       <button id="sendServerAnnouncement" class="secondary" style="width:100%;margin-top:8px">전체 공지 보내기</button>
       <p id="serverAnnouncementMsg" class="msg"></p>
       <div id="announcementAdminList"></div>`;
     profilePanel?.appendChild(adminBox);
 
-    let announcementChannel = null;
     const isAdminSession = session => {
       const email = String(session?.user?.email || '').toLowerCase();
-      return email.split('@')[0] === 'yegeon2919';
+      return email === 'yegeon2919@studyloop.local';
     };
 
     const loadAnnouncements = async () => {
@@ -155,12 +155,11 @@
         adminBox.style.display = 'none';
         return;
       }
-      const r = await sb.from('global_announcements').select('id,message,created_at,author_id')
+      const r = await sb.from('server_announcements').select('id,message,created_at,created_by')
         .order('created_at', {ascending:false}).limit(10);
       const rows = r.data || [];
       if (rows.length) {
-        const latest = rows[0];
-        banner.textContent = '📢 공지 · ' + latest.message;
+        banner.textContent = '📢 공지 · ' + rows[0].message;
         banner.style.display = 'block';
       } else {
         banner.style.display = 'none';
@@ -172,7 +171,7 @@
         list.innerHTML = rows.map(x => `<div style="padding:10px 0;border-top:1px solid #dfe7ea"><div style="white-space:pre-wrap">${esc(x.message)}</div><button class="danger deleteAnnouncement" data-id="${x.id}" style="margin-top:6px">공지 삭제</button></div>`).join('') || '<p class="msg">아직 공지가 없어.</p>';
         list.querySelectorAll('.deleteAnnouncement').forEach(btn => {
           btn.onclick = async () => {
-            const d = await sb.from('global_announcements').delete().eq('id', btn.dataset.id);
+            const d = await sb.from('server_announcements').delete().eq('id', btn.dataset.id);
             if (d.error) { setText('serverAnnouncementMsg','삭제 실패: '+d.error.message); return; }
             setText('serverAnnouncementMsg','공지를 삭제했어.');
             await loadAnnouncements();
@@ -189,7 +188,7 @@
       const message = input.value.trim();
       if (!message) return;
       sendBtn.disabled = true;
-      const r = await sb.from('global_announcements').insert({author_id:session.user.id,message});
+      const r = await sb.from('server_announcements').insert({created_by:session.user.id,message});
       sendBtn.disabled = false;
       if (r.error) { setText('serverAnnouncementMsg','공지 실패: '+r.error.message); return; }
       input.value = '';
@@ -197,16 +196,9 @@
       await loadAnnouncements();
     };
 
-    const subscribe = async () => {
-      if (announcementChannel) await sb.removeChannel(announcementChannel);
-      announcementChannel = sb.channel('global-announcements-v1').on('postgres_changes', {
-        event:'*', schema:'public', table:'global_announcements'
-      }, () => loadAnnouncements()).subscribe();
-    };
-
-    sb.auth.onAuthStateChange(() => setTimeout(() => { loadAnnouncements(); subscribe(); }, 0));
+    sb.auth.onAuthStateChange(() => setTimeout(loadAnnouncements, 0));
     loadAnnouncements();
-    subscribe();
+    setInterval(loadAnnouncements, 15000);
   };
 
   const loadMainApp = () => {
