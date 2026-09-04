@@ -27,6 +27,18 @@
     return box;
   }
 
+  async function renameUser(userId,currentName){
+    const next=prompt('새 이름을 입력해. (1~20자)',currentName||'');
+    if(next===null)return;
+    const clean=next.trim();
+    if(!clean||clean.length>20){alert('이름은 1~20자로 입력해.');return;}
+    const r=await sb.rpc('admin_set_user_name',{p_user_id:userId,p_name:clean});
+    if(r.error){alert('이름 변경 실패: '+r.error.message);return;}
+    alert('이름을 변경했어.');
+    await loadUsers();
+    if(typeof loadRanking==='function')await loadRanking();
+  }
+
   async function loadUsers(){
     const box=ensureBox();
     if(!box)return;
@@ -44,9 +56,17 @@
       return `<div style="padding:12px 0;border-top:1px solid #dfe7ea">
         <div><b>${esc(x.display_name)}</b> <span style="color:#6c7f86">@${esc(x.username)}</span>${self?' · 나':''}</div>
         <div style="font-size:13px;color:#6c7f86;margin-top:3px">${Number(x.xp||0)} XP · 목표 ${Number(x.target_score||90)}점</div>
-        ${!self?`<button class="primary adminInviteUser" data-id="${x.user_id}" style="margin-top:8px" ${canInvite?'':'disabled'}>${canInvite?'내 방에 초대':'내가 만든 방에 들어가 있어야 초대 가능'}</button>`:''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button class="smallBtn adminRenameUser" data-id="${x.user_id}" data-name="${esc(x.display_name)}">이름 변경</button>
+          ${!self?`<button class="primary adminInviteUser" data-id="${x.user_id}" ${canInvite?'':'disabled'}>${canInvite?'내 방에 초대':'내가 만든 방에 들어가 있어야 초대 가능'}</button>`:''}
+        </div>
       </div>`;
     }).join('')||'<p class="msg">유저가 없어.</p>';
+
+    list.querySelectorAll('.adminRenameUser').forEach(btn=>{
+      btn.onclick=()=>renameUser(btn.dataset.id,btn.dataset.name);
+    });
+
     list.querySelectorAll('.adminInviteUser').forEach(btn=>{
       btn.onclick=async()=>{
         if(!currentRoom||String(currentRoom.owner_id)!==String(user?.id)){alert('먼저 네가 만든 방에 들어가 있어야 해.');return;}
