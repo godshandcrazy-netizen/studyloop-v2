@@ -1,26 +1,16 @@
-/* StudyLoop v2 recovery bridge. */
+/* StudyLoop v2 loader */
 (() => {
-  // Supabase SDK may keep its own fetch reference, so patch createClient itself.
   const patchSupabase = () => {
     if (!window.supabase || !window.supabase.createClient) return false;
     if (window.supabase.__studyloopPatched) return true;
-
     const originalCreateClient = window.supabase.createClient.bind(window.supabase);
     window.supabase.createClient = (...args) => {
       const client = originalCreateClient(...args);
-      const originalInvoke = client.functions.invoke.bind(client.functions);
-      client.functions.invoke = (functionName, options) => {
-        const actualName = functionName === 'bright-handler'
-          ? 'studyloop-lessons'
-          : functionName;
-        return originalInvoke(actualName, options);
-      };
       return client;
     };
     window.supabase.__studyloopPatched = true;
     return true;
   };
-
   const loadMainApp = () => {
     patchSupabase();
     const script = document.createElement('script');
@@ -32,17 +22,13 @@
     };
     document.body.appendChild(script);
   };
-
-  if (patchSupabase()) {
-    loadMainApp();
-  } else {
+  if (patchSupabase()) loadMainApp();
+  else {
     let tries = 0;
     const timer = setInterval(() => {
       tries++;
-      if (patchSupabase()) {
-        clearInterval(timer);
-        loadMainApp();
-      } else if (tries >= 100) {
+      if (patchSupabase()) { clearInterval(timer); loadMainApp(); }
+      else if (tries >= 100) {
         clearInterval(timer);
         const el = document.getElementById('setupMsg');
         if (el) el.textContent = 'Supabase 라이브러리를 불러오지 못했어.';
