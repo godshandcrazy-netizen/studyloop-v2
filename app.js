@@ -1,7 +1,16 @@
-/* StudyLoop v2 recovery bridge.
-   Uses the last working application logic from the original StudyLoop repository
-   while v2 keeps its own clean interface and configuration. */
+/* StudyLoop v2 recovery bridge. */
 (() => {
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = function(input, init) {
+    let url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+    if (url.includes('/functions/v1/bright-handler')) {
+      url = url.replace('/functions/v1/bright-handler', '/functions/v1/studyloop-lessons');
+      if (typeof input === 'string') input = url;
+      else input = new Request(url, input);
+    }
+    return originalFetch(input, init);
+  };
+
   const script = document.createElement('script');
   script.src = 'https://godshandcrazy-netizen.github.io/studyloop/app.js?v=20260904';
   script.async = false;
