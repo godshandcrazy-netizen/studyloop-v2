@@ -9,7 +9,10 @@
 5) 자료의 글자가 OCR/스캔 문제로 깨져 보이면 주변 문맥을 이용해 교정할 수 있음. 단, 확실하지 않은 내용을 새로 만들어내면 안 됨.
 6) 특히 역사 과목의 인명·지명·왕조명·제도명·사료 용어 같은 고유명사는 일반적으로 통용되는 역사 표기와 문맥을 대조해 가장 자연스러운 표기로 복원할 것. 확신이 낮으면 억지로 고치지 말고 원자료의 의미가 보존되도록 처리할 것.
 7) concept_summary는 핵심만 짧게, content는 원자료 내용을 빠짐없이 여러 짧은 레슨으로 나눠 담을 것.
-8) 중학교 내신시험용이므로 암기만이 아니라 원인-결과, 비교, 선지 판별, 자료 해석을 짧은 문제로 자주 인출하게 만들 것.`;
+8) 중학교 내신시험용이므로 암기만이 아니라 원인-결과, 비교, 선지 판별, 자료 해석을 짧은 문제로 자주 인출하게 만들 것.
+9) 매우 중요: 각 레슨의 모든 문제는 그 레슨의 content(제시문)에 명시적으로 나온 정보만으로 정답을 판단할 수 있어야 한다. 다른 레슨이나 원본 전체 자료에만 있는 내용을 그 레슨 문제로 내면 안 된다.
+10) 문제를 만들기 전에 반드시 '이 문제의 정답 근거가 현재 content 문장 안에 실제로 있는가?'를 검사한다. 없으면 문제를 삭제하거나, 해당 근거가 들어 있는 별도 레슨으로 옮긴다.
+11) visual_required=true인 자료 문제만 예외적으로 현재 제시문 + 연결된 이미지에 나온 정보까지 사용할 수 있다. 일반 문제는 외부 상식, 교과서 배경지식, 다른 레슨 내용을 요구하면 안 된다.`;
   async function upgradedGenerateLessons(curriculum,filesOverride=null){
     setText('curriculumMsg','AI가 짧은 제시문과 여러 문제로 중학교 내신 커리큘럼을 만드는 중...');
     let files=filesOverride;
@@ -69,7 +72,7 @@
       if(typeof generateLessons!=='function'||typeof sb==='undefined'||!sb){setTimeout(patch,100);return;}
       generateLessons=upgradedGenerateLessons;
       patched=true;
-      console.log('StudyLoop short-passage curriculum generator enabled');
+      console.log('StudyLoop passage-grounded curriculum generator enabled');
     }catch{setTimeout(patch,100)}
   }
   patch();
