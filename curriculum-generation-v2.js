@@ -1,20 +1,24 @@
 (()=>{
   let patched=false;
   const clampRounds=n=>Math.max(3,Math.min(5,Number(n||4)));
-  const generationGuide=`[추가 제작 지침 - 아래는 학습자료가 아니라 커리큘럼 생성 규칙임]
-1) 원본 자료의 시험 범위 내용을 요약해서 버리지 말 것. 중요한 사실·인과관계·비교·용어를 전체 커리큘럼에 빠짐없이 분산해서 포함할 것.
-2) 한 레슨의 content(제시문)는 길게 몰아넣지 말 것. 한국어 기준 대략 80~150자, 또는 짧은 2~4문장 정도를 목표로 하며, 길어지면 레슨을 더 잘게 나눌 것. 한 화면에서 가볍게 읽고 바로 문제를 풀 수 있어야 함.
-3) 하나의 긴 단원은 여러 개의 짧은 레슨으로 분해할 것. 각 레슨은 하나의 작은 출제 포인트만 다룰 것.
-4) 각 레슨의 문제는 짧은 문장 위주로 8~10개 생성. 보기 역시 가능한 짧게. 같은 사실을 표현만 바꿔 반복하지 말 것.
-5) 자료의 글자가 OCR/스캔 문제로 깨져 보이면 주변 문맥을 이용해 교정할 수 있음. 단, 확실하지 않은 내용을 새로 만들어내면 안 됨.
-6) 특히 역사 과목의 인명·지명·왕조명·제도명·사료 용어 같은 고유명사는 일반적으로 통용되는 역사 표기와 문맥을 대조해 가장 자연스러운 표기로 복원할 것. 확신이 낮으면 억지로 고치지 말고 원자료의 의미가 보존되도록 처리할 것.
-7) concept_summary는 핵심만 짧게, content는 원자료 내용을 빠짐없이 여러 짧은 레슨으로 나눠 담을 것.
-8) 중학교 내신시험용이므로 암기만이 아니라 원인-결과, 비교, 선지 판별, 자료 해석을 짧은 문제로 자주 인출하게 만들 것.
-9) 매우 중요: 각 레슨의 모든 문제는 그 레슨의 content(제시문)에 명시적으로 나온 정보만으로 정답을 판단할 수 있어야 한다. 다른 레슨이나 원본 전체 자료에만 있는 내용을 그 레슨 문제로 내면 안 된다.
-10) 문제를 만들기 전에 반드시 '이 문제의 정답 근거가 현재 content 문장 안에 실제로 있는가?'를 검사한다. 없으면 문제를 삭제하거나, 해당 근거가 들어 있는 별도 레슨으로 옮긴다.
-11) visual_required=true인 자료 문제만 예외적으로 현재 제시문 + 연결된 이미지에 나온 정보까지 사용할 수 있다. 일반 문제는 외부 상식, 교과서 배경지식, 다른 레슨 내용을 요구하면 안 된다.`;
+  const generationGuide=`[강제 제작 지침 - 아래는 학습자료가 아니라 커리큘럼 생성 규칙임]
+1) 지식의 출처는 업로드된 PDF/사진뿐이다. 외부 상식, 교과서 일반지식, 웹 지식, 모델의 배경지식을 학습 내용이나 정답 근거로 추가하지 말 것.
+2) 원본 시험범위의 내용을 절대 생략하지 말 것. 작은 문장, 괄호 속 설명, 날짜, 인명, 지명, 제도명, 원인·결과, 비교, 예시, 표·그림의 핵심 정보까지 전체 커리큘럼 어딘가에 반드시 들어가야 한다.
+3) '핵심만 골라 요약'하지 말 것. 목표는 요약본이 아니라 원본 전체 내용을 짧은 학습 조각으로 재배치하는 것이다.
+4) 먼저 원본을 순서대로 훑어 사실 단위로 나눈 뒤, 각 사실 단위가 어느 레슨 content에 들어갔는지 내부적으로 대조한다. 하나라도 빠졌으면 레슨을 추가해서 포함한다.
+5) 레슨 개수에 상한을 두지 않는다. 원본이 길면 20개, 30개 이상으로 늘려도 된다. 내용 누락보다 레슨 수 증가를 항상 우선한다.
+6) 한 레슨의 content(제시문)는 한국어 기준 약 50~110자 또는 1~3문장 정도를 목표로 한다. 너무 길어지면 같은 주제를 여러 레슨으로 나눈다.
+7) content는 원본 의미를 유지하되 읽기 쉽게 문장을 다듬을 수 있다. 원본에 없는 새 사실을 보태면 안 된다.
+8) OCR/스캔 때문에 글자가 깨졌다면 주변 문맥으로 복원할 수 있다. 역사 인명·지명·왕조·제도·사료 용어는 통용 표기를 참고해 복원하되, 확신이 낮으면 추측해 새 사실을 만들지 않는다.
+9) 각 레슨마다 짧은 문제를 6~10개 만든다. 같은 사실만 말 바꿔 반복하지 않는다.
+10) 매우 중요: 각 문제의 정답 근거는 반드시 그 레슨의 content에 명시적으로 존재해야 한다. 현재 content에 없는 사실을 묻는 문제는 절대 만들지 않는다.
+11) 예: content에 '색목인은 재정과 행정을 담당했다'가 없으면 '재정과 행정을 담당한 계층은?' 같은 문제를 만들면 안 된다.
+12) 다른 레슨, 원본의 다른 페이지, 외부 배경지식을 기억해야 풀 수 있는 문제를 만들지 않는다. visual_required=true인 경우만 현재 content와 연결된 이미지 자체의 정보까지 사용할 수 있다.
+13) 문제를 만든 뒤 각 문항마다 '정답 근거 문장이 현재 content 안에 있는지' 자체 점검하고, 없으면 해당 문항을 삭제하거나 content를 원본 근거에 맞게 분리·재구성한다.
+14) concept_summary는 시험 직전용 매우 짧은 요약이고, content는 반드시 해당 구간의 원본 내용을 빠짐없이 담는다.
+15) 최종 출력 직전에 전체 PDF의 사실 단위와 생성된 모든 content를 다시 대조해 누락된 내용이 있으면 반드시 추가 레슨을 생성한다.`;
   async function upgradedGenerateLessons(curriculum,filesOverride=null){
-    setText('curriculumMsg','AI가 짧은 제시문과 여러 문제로 중학교 내신 커리큘럼을 만드는 중...');
+    setText('curriculumMsg','PDF 전체 내용을 빠짐없이 짧은 레슨으로 나누는 중...');
     let files=filesOverride;
     if(!files){
       const r=await sb.from('curriculum_files').select('*').eq('curriculum_id',curriculum.id).order('sort_order');
@@ -41,7 +45,7 @@
     const lessons=Array.isArray(generated.lessons)?generated.lessons:[];
     if(!lessons.length)throw new Error('AI가 레슨을 만들지 못했어.');
     const recommended=clampRounds(generated.recommended_rounds);
-    const strategy=String(generated.study_strategy||'짧은 제시문을 읽고 즉시 여러 번 인출한 뒤, 오답률에 따라 간격 복습한다.');
+    const strategy=String(generated.study_strategy||'원본 전체를 짧은 제시문으로 나눠 학습하고, 제시문을 가린 뒤 인출 문제를 푼다.');
     const cu=await sb.from('curricula').update({recommended_rounds:recommended,study_strategy:strategy}).eq('id',curriculum.id);
     if(cu.error)throw new Error('학습 계획 저장 실패: '+cu.error.message);
     curriculum.recommended_rounds=recommended;
@@ -72,7 +76,7 @@
       if(typeof generateLessons!=='function'||typeof sb==='undefined'||!sb){setTimeout(patch,100);return;}
       generateLessons=upgradedGenerateLessons;
       patched=true;
-      console.log('StudyLoop passage-grounded curriculum generator enabled');
+      console.log('StudyLoop complete PDF-only curriculum generator enabled');
     }catch{setTimeout(patch,100)}
   }
   patch();
